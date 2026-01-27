@@ -11,6 +11,7 @@ export const jiraConfigSchema = z.object({
   domain: z.string().min(1),
   email: z.email(),
   apiToken: z.string().min(1),
+  projectKeys: z.array(z.string().min(1)).min(1),
 });
 export type JiraConfig = z.infer<typeof jiraConfigSchema>;
 
