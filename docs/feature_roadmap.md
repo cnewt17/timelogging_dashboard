@@ -114,7 +114,7 @@ Create a service for securely storing and retrieving Jira connection configurati
 
 **Example API**:
 ```typescript
-ConfigService.save({ domain, email, apiToken });
+ConfigService.save({ domain, email, apiToken, projectKeys: ['PROJ', 'ENG'] });
 const config = ConfigService.load();
 ConfigService.clear();
 ```
@@ -131,31 +131,39 @@ Build the core service that communicates with Jira REST API, handling authentica
 
 **Acceptance Criteria**:
 - [ ] `JiraApiClient` class created
-- [ ] Configurable with domain, email, and API token
-- [ ] Method: `testConnection()` - validates credentials
-- [ ] Method: `fetchWorklogs(startDate, endDate)` - retrieves worklog data
-- [ ] Method: `fetchIssue(issueKey)` - gets single issue details
+- [ ] Configurable with domain, email, API token, and project keys
+- [ ] Method: `testConnection()` - validates credentials via GET /rest/api/3/myself
+- [ ] Method: `searchIssues(jql, startAt?, maxResults?)` - paginated issue search
+- [ ] Method: `fetchIssueWorklogs(issueKey)` - retrieves worklogs for a single issue
+- [ ] Method: `fetchWorklogs(startDate, endDate)` - high-level method that searches issues scoped to configured project keys, paginates all results, fetches worklogs per issue, and filters worklogs to the requested date range
 - [ ] Proper Authorization headers (Basic Auth)
-- [ ] Error handling with meaningful error messages
-- [ ] Request timeout handling (30 seconds max)
-- [ ] Type-safe responses using defined interfaces
+- [ ] Error handling with typed `JiraApiError` (AUTH_FAILED, RATE_LIMITED, NETWORK_ERROR, TIMEOUT, UNKNOWN)
+- [ ] Request timeout handling (30 seconds max via AbortController)
+- [ ] Retry with exponential backoff on 429 (rate limit) responses
+- [ ] Type-safe responses validated with Zod schemas
+- [ ] Bun server proxy routes to avoid CORS issues (frontend calls /api/jira/*)
 
 **Technical Notes**:
-- Use Axios for HTTP client
+- Use native `fetch()` (built into Bun, no Axios needed)
 - Base URL construction: `https://{domain}.atlassian.net`
-- Handle rate limiting (add retry logic with backoff)
+- JQL scoped by project keys: `project IN ("PROJ", "ENG") AND worklogDate >= "..." AND worklogDate <= "..."`
+- Paginate search results (Jira returns max 50-100 per page)
+- Paginate worklogs per issue (Jira returns max 20 per page)
+- Filter worklogs client-side by `started` date (JQL finds issues with any worklog in range, but returns all worklogs on matching issues)
 - Log errors to console (but not sensitive data)
-- Consider CORS issues (may need proxy)
 
 **Files Created**:
 - `/src/services/jiraApiClient.ts`
-- `/src/utils/apiHelpers.ts`
+
+**Server Routes Added** (in `/src/index.ts`):
+- `POST /api/jira/test-connection` — proxies credential test to Jira
+- `POST /api/jira/worklogs` — fetches and returns issues with worklogs for a date range
 
 **Example API**:
 ```typescript
-const client = new JiraApiClient(domain, email, apiToken);
+const client = new JiraApiClient({ domain, email, apiToken, projectKeys: ['PROJ'] });
 await client.testConnection();
-const worklogs = await client.fetchWorklogs('2026-01-01', '2026-01-27');
+const issues = await client.fetchWorklogs('2026-01-01', '2026-01-27');
 ```
 
 ---
@@ -169,8 +177,8 @@ const worklogs = await client.fetchWorklogs('2026-01-01', '2026-01-27');
 Create the UI for first-time setup where users enter Jira credentials and test the connection.
 
 **Acceptance Criteria**:
-- [ ] Form with fields: Jira Domain, Email, API Token
-- [ ] Input validation (required fields, email format)
+- [ ] Form with fields: Jira Domain, Email, API Token, Project Keys (comma-separated)
+- [ ] Input validation (required fields, email format, at least one project key)
 - [ ] "Test Connection" button
 - [ ] "Save Configuration" button
 - [ ] Success message on valid connection

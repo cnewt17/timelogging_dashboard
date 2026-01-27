@@ -49,7 +49,7 @@ Build a web-based dashboard that connects to Jira's API and visualizes time logg
 │ Time Logging Dashboard                                  │
 ├─────────────────────────────────────────────────────────┤
 │                                                          │
-│  [Configure Jira Connection] → API Key Storage          │
+│  [Configure Jira Connection + Project Keys] → Storage   │
 │                                                          │
 │  [Select Date Range] → Filter Data                      │
 │                                                          │
@@ -65,7 +65,7 @@ Build a web-based dashboard that connects to Jira's API and visualizes time logg
 ```
 
 ### User Flow (Fat Marker Sketch)
-1. **First Time Setup**: User enters Jira credentials → System validates connection → Dashboard loads
+1. **First Time Setup**: User enters Jira credentials and project keys → System validates connection → Dashboard loads
 2. **Daily Usage**: User opens dashboard → Sees overview of current sprint → Identifies outliers → Drills down for details
 3. **Weekly Review**: User selects custom date range → Reviews team performance → Exports data for leadership review
 
@@ -81,11 +81,12 @@ Build a web-based dashboard that connects to Jira's API and visualizes time logg
 **So that** I can access my team's time logging data
 
 **Acceptance Criteria:**
-- User can input Jira domain, email, and API token
+- User can input Jira domain, email, API token, and one or more project keys
+- Project keys scope all data fetching to only the specified projects
 - System validates credentials before saving
 - Error messages clearly explain authentication failures
 - Credentials are stored securely (not in plain text)
-- User can update/change credentials later
+- User can update/change credentials and project keys later
 
 #### US-2: Time Data Visualization
 **As a** project manager  
@@ -192,6 +193,11 @@ GET /rest/api/3/myself
 - Basic Auth with email + API token
 - API token generated from user's Jira account settings
 - Token stored encrypted (if backend) or in browser's secure storage
+
+#### Project Scoping
+- User provides one or more Jira project keys (e.g., "PROJ", "ENG") during setup
+- All JQL queries are scoped to these projects using `project IN ("PROJ", "ENG")`
+- This reduces API call volume and ensures only relevant data is fetched
 
 #### Rate Limiting Considerations
 - Jira Cloud: 100 requests per 10 seconds per user
