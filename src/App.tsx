@@ -1,31 +1,39 @@
-import { APITester } from "./APITester";
+import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import "./index.css";
 
-import logo from "./logo.svg";
-import reactLogo from "./react.svg";
+function DashboardPage() {
+  return (
+    <div className="min-h-screen bg-gray-50 text-gray-900">
+      <header className="bg-white border-b border-gray-200 px-6 py-4">
+        <h1 className="text-xl font-semibold">Jira Time Logging Dashboard</h1>
+      </header>
+      <main className="p-6">
+        <p className="text-gray-500">Dashboard coming soon.</p>
+      </main>
+    </div>
+  );
+}
+
+function SetupPage() {
+  return (
+    <div className="min-h-screen bg-gray-50 text-gray-900 flex items-center justify-center">
+      <div className="max-w-md w-full p-6">
+        <h1 className="text-2xl font-semibold mb-2">Setup</h1>
+        <p className="text-gray-500">Configuration form coming soon.</p>
+      </div>
+    </div>
+  );
+}
 
 export function App() {
   return (
-    <div className="max-w-7xl mx-auto p-8 text-center relative z-10">
-      <div className="flex justify-center items-center gap-8 mb-8">
-        <img
-          src={logo}
-          alt="Bun Logo"
-          className="h-24 p-6 transition-all duration-300 hover:drop-shadow-[0_0_2em_#646cffaa] scale-120"
-        />
-        <img
-          src={reactLogo}
-          alt="React Logo"
-          className="h-24 p-6 transition-all duration-300 hover:drop-shadow-[0_0_2em_#61dafbaa] animate-[spin_20s_linear_infinite]"
-        />
-      </div>
-
-      <h1 className="text-5xl font-bold my-4 leading-tight">Bun + React</h1>
-      <p>
-        Edit <code className="bg-[#1a1a1a] px-2 py-1 rounded font-mono">src/App.tsx</code> and save to test HMR
-      </p>
-      <APITester />
-    </div>
+    <BrowserRouter>
+      <Routes>
+        <Route path="/" element={<DashboardPage />} />
+        <Route path="/setup" element={<SetupPage />} />
+        <Route path="*" element={<Navigate to="/" replace />} />
+      </Routes>
+    </BrowserRouter>
   );
 }
 
