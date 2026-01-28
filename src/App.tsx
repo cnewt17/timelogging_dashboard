@@ -4,6 +4,7 @@ import "./index.css";
 import { DashboardLayout } from "./components/DashboardLayout";
 import { TabNav } from "./components/TabNav";
 import { ProjectBreakdownChart } from "./components/ProjectBreakdownChart";
+import { ProjectDrillDown } from "./components/ProjectDrillDown";
 import { TeamMemberBreakdown } from "./components/TeamMemberBreakdown";
 import { DateRangePicker } from "./components/DateRangePicker";
 import { LoadingSpinner, Toast } from "./components/common";
@@ -34,6 +35,9 @@ function DashboardPage() {
   const [activeTab, setActiveTab] = useState<TabId>("projects");
   const [dateRange, setDateRange] = useState<DateRange>(getLast30Days);
   const [appConfig, setAppConfig] = useState<AppConfig>(DEFAULT_CONFIG);
+  const [selectedProjectKey, setSelectedProjectKey] = useState<string | null>(
+    null,
+  );
 
   const { data, isLoading, error, fetchData, clearError } = useWorklogData();
 
@@ -51,10 +55,21 @@ function DashboardPage() {
   const handleDateRangeChange = (newRange: DateRange) => {
     setDateRange(newRange);
     fetchData(newRange);
+    setSelectedProjectKey(null); // Clear selection when date range changes
   };
 
   const projectData = data?.projects ?? [];
   const teamMemberData = data?.teamMembers ?? [];
+
+  // Find selected project for drill-down
+  const selectedProject = selectedProjectKey
+    ? projectData.find((p) => p.projectKey === selectedProjectKey)
+    : null;
+
+  // Toggle project selection (click again to deselect)
+  const handleProjectClick = (projectKey: string) => {
+    setSelectedProjectKey((prev) => (prev === projectKey ? null : projectKey));
+  };
 
   return (
     <DashboardLayout
@@ -94,7 +109,20 @@ function DashboardPage() {
           )}
 
           {activeTab === "projects" && (
-            <ProjectBreakdownChart projects={projectData} />
+            <>
+              <ProjectBreakdownChart
+                projects={projectData}
+                selectedProjectKey={selectedProjectKey}
+                onProjectClick={handleProjectClick}
+              />
+              {selectedProject && (
+                <ProjectDrillDown
+                  project={selectedProject}
+                  jiraDomain={appConfig.jiraDomain}
+                  onClose={() => setSelectedProjectKey(null)}
+                />
+              )}
+            </>
           )}
 
           {activeTab === "team" && (

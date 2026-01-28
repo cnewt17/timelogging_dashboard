@@ -1,6 +1,7 @@
 import {
   BarChart as RechartsBarChart,
   Bar,
+  Rectangle,
   XAxis,
   YAxis,
   CartesianGrid,
@@ -28,6 +29,11 @@ type TooltipFormatter = (
   payload: ReadonlyArray<{ payload: Record<string, unknown> }>,
 ) => [React.ReactNode, string] | React.ReactNode;
 
+export interface BarClickData {
+  payload: Record<string, unknown>;
+  index: number;
+}
+
 interface BarChartProps {
   data: Record<string, unknown>[];
   bars: BarConfig[];
@@ -41,6 +47,8 @@ interface BarChartProps {
   className?: string;
   ariaLabel?: string;
   tooltipFormatter?: TooltipFormatter;
+  onBarClick?: (data: BarClickData) => void;
+  activeIndex?: number | null;
 }
 
 // ---------------------------------------------------------------------------
@@ -60,6 +68,8 @@ export function BarChart({
   className = "",
   ariaLabel = "Bar chart",
   tooltipFormatter,
+  onBarClick,
+  activeIndex,
 }: BarChartProps) {
   if (data.length === 0) return null;
 
@@ -113,16 +123,42 @@ export function BarChart({
 
           {showLegend && <Legend />}
 
-          {bars.map((bar, index) => (
-            <Bar
-              key={bar.dataKey}
-              dataKey={bar.dataKey}
-              name={bar.name ?? bar.dataKey}
-              fill={bar.color ?? getColor(index)}
-              radius={CHART_DEFAULTS.barRadius}
-              stackId={stacked ? "stack" : undefined}
-            />
-          ))}
+          {bars.map((bar, barIndex) => {
+            const barFill = bar.color ?? getColor(barIndex);
+            return (
+              <Bar
+                key={bar.dataKey}
+                dataKey={bar.dataKey}
+                name={bar.name ?? bar.dataKey}
+                fill={barFill}
+                radius={CHART_DEFAULTS.barRadius}
+                stackId={stacked ? "stack" : undefined}
+                onClick={
+                  onBarClick
+                    ? (barData, index) =>
+                        onBarClick({
+                          payload: barData.payload as Record<string, unknown>,
+                          index,
+                        })
+                    : undefined
+                }
+                cursor={onBarClick ? "pointer" : undefined}
+                shape={
+                  activeIndex != null
+                    ? (
+                        props: React.ComponentProps<typeof Rectangle> & {
+                          index?: number;
+                        },
+                      ) => {
+                        const { index, ...rest } = props;
+                        const opacity = index === activeIndex ? 1 : 0.5;
+                        return <Rectangle {...rest} fillOpacity={opacity} />;
+                      }
+                    : undefined
+                }
+              />
+            );
+          })}
         </RechartsBarChart>
       </ResponsiveContainer>
     </div>
