@@ -87,37 +87,9 @@ Define all TypeScript interfaces and types for Jira data models, application sta
 ---
 
 #### F1.3 - Configuration Storage Service
-**Priority**: P0  
-**Complexity**: Medium  
-**Time Estimate**: 2-3 hours  
+**Status**: SUPERSEDED — replaced by `.env` file configuration (see F1.5).
 
-**Description**:
-Create a service for securely storing and retrieving Jira connection configuration in browser LocalStorage.
-
-**Acceptance Criteria**:
-- [ ] `ConfigService` class or functions created
-- [ ] Save configuration to LocalStorage
-- [ ] Retrieve configuration from LocalStorage
-- [ ] Clear/delete configuration
-- [ ] Basic encryption for API token (e.g., base64 at minimum)
-- [ ] Validates configuration structure before saving
-- [ ] Returns null/undefined for missing config gracefully
-
-**Technical Notes**:
-- Use a consistent storage key (e.g., 'jira-dashboard-config')
-- Consider using `crypto-js` for better encryption
-- Handle JSON parsing errors gracefully
-
-**Files Created**:
-- `/src/services/configService.ts`
-- `/src/utils/encryption.ts` (optional)
-
-**Example API**:
-```typescript
-ConfigService.save({ domain, email, apiToken, projectKeys: ['PROJ', 'ENG'] });
-const config = ConfigService.load();
-ConfigService.clear();
-```
+~~Original scope: LocalStorage-based config service. Removed because the app runs locally and `.env` is simpler and more appropriate.~~
 
 ---
 
@@ -168,35 +140,36 @@ const issues = await client.fetchWorklogs('2026-01-01', '2026-01-27');
 
 ---
 
-#### F1.5 - Setup/Configuration Screen
+#### F1.5 - Configuration via .env File
 **Priority**: P0  
-**Complexity**: Medium  
-**Time Estimate**: 3-4 hours  
+**Complexity**: Low  
+**Time Estimate**: 1 hour  
 
 **Description**:
-Create the UI for first-time setup where users enter Jira credentials and test the connection.
+Configuration is provided via a `.env` file rather than a UI form. The server reads environment variables at startup, validates them with Zod, and fails fast with clear error messages if the config is missing or invalid. This approach is simpler since the app runs locally.
 
 **Acceptance Criteria**:
-- [ ] Form with fields: Jira Domain, Email, API Token, Project Keys (comma-separated)
-- [ ] Input validation (required fields, email format, at least one project key)
-- [ ] "Test Connection" button
-- [ ] "Save Configuration" button
-- [ ] Success message on valid connection
-- [ ] Error message display for failed connection
-- [ ] Loading state during connection test
-- [ ] Password-type input for API token (hidden by default)
-- [ ] Help text explaining where to get API token
-- [ ] Link to Jira API token generation page
+- [x] `.env.example` file with documented variables (JIRA_DOMAIN, JIRA_EMAIL, JIRA_API_TOKEN, JIRA_PROJECT_KEYS)
+- [x] Server reads and validates env vars at startup using `jiraConfigSchema`
+- [x] Server exits with clear error messages if config is invalid
+- [x] Single `JiraApiClient` instance created at startup (not per-request)
+- [x] Proxy routes simplified (no config in request bodies)
+- [x] `.env` already in `.gitignore` (credentials never committed)
 
 **Technical Notes**:
-- Use controlled components for form inputs
-- Disable "Save" until connection test succeeds
-- Clear previous error messages on re-test
-- Consider adding "Show/Hide" toggle for API token
+- Bun natively loads `.env` files — no `dotenv` package needed
+- `JIRA_PROJECT_KEYS` is comma-separated and split at startup
+- Previous F1.3 (LocalStorage config) and setup screen removed as unnecessary
+
+**Files Modified**:
+- `/src/index.ts` — reads env, validates, creates client at startup
+- `/src/App.tsx` — removed `/setup` route
 
 **Files Created**:
-- `/src/components/SetupScreen.tsx`
-- `/src/components/ConfigForm.tsx`
+- `/.env.example`
+
+**Files Deleted**:
+- `/src/services/configService.ts` (F1.3, no longer needed)
 
 ---
 
@@ -567,30 +540,7 @@ Generate and download CSV file with current dashboard data.
 ---
 
 #### F4.2 - Settings/Configuration Management Screen
-**Priority**: P1  
-**Complexity**: Medium  
-**Time Estimate**: 3 hours  
-
-**Description**:
-Create a settings page where users can view, edit, or delete their Jira configuration.
-
-**Acceptance Criteria**:
-- [ ] Accessible from header icon/menu
-- [ ] Displays current Jira domain and email (not API token)
-- [ ] "Edit Configuration" button → opens config form
-- [ ] "Test Connection" button to re-validate
-- [ ] "Delete Configuration" button with confirmation
-- [ ] "Back to Dashboard" button
-- [ ] Warns user that deleting config will require re-setup
-
-**Technical Notes**:
-- Reuse `ConfigForm` component from setup
-- Add confirmation modal for destructive actions
-- Redirect to setup screen after deleting config
-
-**Files Created**:
-- `/src/components/SettingsScreen.tsx`
-- `/src/components/ConfirmationModal.tsx`
+**Status**: SUPERSEDED — configuration is now managed via `.env` file (see F1.5). No UI settings screen needed.
 
 ---
 

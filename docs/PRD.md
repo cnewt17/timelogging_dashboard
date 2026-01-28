@@ -65,7 +65,7 @@ Build a web-based dashboard that connects to Jira's API and visualizes time logg
 ```
 
 ### User Flow (Fat Marker Sketch)
-1. **First Time Setup**: User enters Jira credentials and project keys → System validates connection → Dashboard loads
+1. **First Time Setup**: User creates `.env` file with Jira credentials and project keys → Starts server → Dashboard loads
 2. **Daily Usage**: User opens dashboard → Sees overview of current sprint → Identifies outliers → Drills down for details
 3. **Weekly Review**: User selects custom date range → Reviews team performance → Exports data for leadership review
 
@@ -81,12 +81,11 @@ Build a web-based dashboard that connects to Jira's API and visualizes time logg
 **So that** I can access my team's time logging data
 
 **Acceptance Criteria:**
-- User can input Jira domain, email, API token, and one or more project keys
+- User configures Jira domain, email, API token, and one or more project keys via a `.env` file
 - Project keys scope all data fetching to only the specified projects
-- System validates credentials before saving
-- Error messages clearly explain authentication failures
-- Credentials are stored securely (not in plain text)
-- User can update/change credentials and project keys later
+- Server validates configuration at startup and fails fast with clear error messages if invalid
+- Credentials are kept server-side only (never sent to the browser)
+- User can update configuration by editing `.env` and restarting the server
 
 #### US-2: Time Data Visualization
 **As a** project manager  
@@ -192,7 +191,7 @@ GET /rest/api/3/myself
 #### Authentication
 - Basic Auth with email + API token
 - API token generated from user's Jira account settings
-- Token stored encrypted (if backend) or in browser's secure storage
+- Credentials stored in `.env` file (server-side only, never exposed to browser)
 
 #### Project Scoping
 - User provides one or more Jira project keys (e.g., "PROJ", "ENG") during setup

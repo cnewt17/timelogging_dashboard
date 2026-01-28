@@ -4,6 +4,36 @@ import { jiraConfigSchema } from "@/types/app";
 import { JiraApiClient, JiraApiError } from "@/services/jiraApiClient";
 import { z } from "zod";
 
+// ---------------------------------------------------------------------------
+// Load config from environment variables
+// ---------------------------------------------------------------------------
+
+const configResult = jiraConfigSchema.safeParse({
+  domain: process.env.JIRA_DOMAIN,
+  email: process.env.JIRA_EMAIL,
+  apiToken: process.env.JIRA_API_TOKEN,
+  projectKeys: process.env.JIRA_PROJECT_KEYS?.split(",")
+    .map((k) => k.trim())
+    .filter(Boolean),
+});
+
+if (!configResult.success) {
+  console.error("Invalid or missing Jira configuration in .env file:");
+  for (const issue of configResult.error.issues) {
+    console.error(`  ${issue.path.join(".")}: ${issue.message}`);
+  }
+  console.error(
+    "\nCreate a .env file based on .env.example and restart the server.",
+  );
+  process.exit(1);
+}
+
+const jiraClient = new JiraApiClient(configResult.data);
+
+// ---------------------------------------------------------------------------
+// Server
+// ---------------------------------------------------------------------------
+
 function errorResponse(err: unknown): Response {
   if (err instanceof JiraApiError) {
     const status =
@@ -33,12 +63,9 @@ function errorResponse(err: unknown): Response {
 const server = serve({
   routes: {
     "/api/jira/test-connection": {
-      async POST(req) {
+      async POST() {
         try {
-          const body = await req.json();
-          const config = jiraConfigSchema.parse(body);
-          const client = new JiraApiClient(config);
-          const result = await client.testConnection();
+          const result = await jiraClient.testConnection();
           return Response.json(result);
         } catch (err) {
           return errorResponse(err);
@@ -50,14 +77,13 @@ const server = serve({
       async POST(req) {
         try {
           const body = await req.json();
-          const schema = z.object({
-            config: jiraConfigSchema,
-            startDate: z.string(),
-            endDate: z.string(),
-          });
-          const { config, startDate, endDate } = schema.parse(body);
-          const client = new JiraApiClient(config);
-          const result = await client.fetchWorklogs(startDate, endDate);
+          const { startDate, endDate } = z
+            .object({
+              startDate: z.string(),
+              endDate: z.string(),
+            })
+            .parse(body);
+          const result = await jiraClient.fetchWorklogs(startDate, endDate);
           // Convert Map to plain object for JSON serialization
           const worklogs: Record<string, unknown[]> = {};
           for (const [key, value] of result.worklogs) {
