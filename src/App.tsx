@@ -4,8 +4,8 @@ import "./index.css";
 import { DashboardLayout } from "./components/DashboardLayout";
 import { TabNav } from "./components/TabNav";
 import { ProjectBreakdownChart } from "./components/ProjectBreakdownChart";
-import { EmptyState } from "./components/common";
-import type { ProjectTimeData } from "./types/app";
+import { TeamMemberBreakdown } from "./components/TeamMemberBreakdown";
+import type { ProjectTimeData, TeamMemberTimeData } from "./types/app";
 
 const TABS = [
   { id: "projects", label: "By Project" },
@@ -19,6 +19,7 @@ function DashboardPage() {
 
   // Placeholder data - will be replaced with actual data fetching
   const projectData: ProjectTimeData[] = [];
+  const teamMemberData: TeamMemberTimeData[] = [];
 
   return (
     <DashboardLayout>
@@ -35,10 +36,7 @@ function DashboardPage() {
           )}
 
           {activeTab === "team" && (
-            <EmptyState
-              message="Team Member View"
-              description="Coming soon in F2.5"
-            />
+            <TeamMemberBreakdown members={teamMemberData} />
           )}
         </div>
       </div>

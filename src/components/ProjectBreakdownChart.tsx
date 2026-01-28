@@ -1,6 +1,7 @@
 import type { ProjectTimeData } from "@/types/app";
 import { BarChart } from "@/components/charts/BarChart";
 import { EmptyState } from "@/components/common";
+import { registerProjects } from "@/utils/projectColorMap";
 
 const MAX_PROJECTS = 20;
 
@@ -27,6 +28,9 @@ export function ProjectBreakdownChart({
   const displayProjects = isTruncated
     ? projects.slice(0, MAX_PROJECTS)
     : projects;
+
+  // Register projects for consistent color assignment across charts
+  registerProjects(displayProjects.map((p) => p.projectKey));
 
   const chartData = displayProjects.map((project) => ({
     name: project.projectName,
