@@ -109,7 +109,6 @@ export class JiraApiClient {
         );
       } catch (err) {
         clearTimeout(timeout);
-
         if (err instanceof JiraApiError) throw err;
 
         if (err instanceof DOMException && err.name === "AbortError") {
@@ -147,16 +146,18 @@ export class JiraApiClient {
   /** Search issues with JQL, single page. */
   async searchIssues(
     jql: string,
-    startAt = 0,
+    nextPageToken?: string,
     maxResults = SEARCH_PAGE_SIZE,
   ): Promise<JiraSearchResponse> {
     const params = new URLSearchParams({
       jql,
       fields: "summary,status,assignee,project,worklog",
-      startAt: String(startAt),
       maxResults: String(maxResults),
     });
-    const data = await this.request(`/rest/api/3/search?${params}`);
+    if (nextPageToken) {
+      params.set("nextPageToken", nextPageToken);
+    }
+    const data = await this.request(`/rest/api/3/search/jql?${params}`);
     return jiraSearchResponseSchema.parse(data);
   }
 
@@ -198,16 +199,16 @@ export class JiraApiClient {
       `AND worklogDate >= "${startDate}" ` +
       `AND worklogDate <= "${endDate}"`;
 
-    // Paginate through all matching issues
+    // Paginate through all matching issues using token-based pagination
     const allIssues: JiraIssue[] = [];
-    let startAt = 0;
+    let nextPageToken: string | undefined;
 
     for (;;) {
-      const page = await this.searchIssues(jql, startAt);
+      const page = await this.searchIssues(jql, nextPageToken);
       allIssues.push(...page.issues);
 
-      if (allIssues.length >= page.total) break;
-      startAt = allIssues.length;
+      if (page.isLast || !page.nextPageToken) break;
+      nextPageToken = page.nextPageToken;
     }
 
     // Fetch full worklogs for each issue and filter by date range

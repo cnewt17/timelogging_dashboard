@@ -85,12 +85,11 @@ export const jiraIssueSchema = z.looseObject({
 });
 export type JiraIssue = z.infer<typeof jiraIssueSchema>;
 
-/** Paginated response from GET /rest/api/3/search */
+/** Paginated response from GET /rest/api/3/search/jql */
 export const jiraSearchResponseSchema = z.looseObject({
-  startAt: z.number(),
-  maxResults: z.number(),
-  total: z.number(),
   issues: z.array(jiraIssueSchema),
+  nextPageToken: z.string().optional(),
+  isLast: z.boolean().optional(),
 });
 export type JiraSearchResponse = z.infer<typeof jiraSearchResponseSchema>;
 
