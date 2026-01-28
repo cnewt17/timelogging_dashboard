@@ -17,3 +17,46 @@
         animation: none !important;
     }
 }
+
+/* react-datepicker style overrides */
+.react-datepicker {
+    @apply border-gray-300 font-sans text-sm shadow-lg;
+}
+
+.react-datepicker__header {
+    @apply bg-gray-100 border-b border-gray-300;
+}
+
+.react-datepicker__current-month {
+    @apply font-semibold text-gray-900;
+}
+
+.react-datepicker__day-name {
+    @apply text-gray-600;
+}
+
+.react-datepicker__day {
+    @apply text-gray-900 hover:bg-gray-200 rounded;
+}
+
+.react-datepicker__day--selected,
+.react-datepicker__day--in-selecting-range,
+.react-datepicker__day--in-range {
+    @apply bg-blue-600 text-white hover:bg-blue-700;
+}
+
+.react-datepicker__day--keyboard-selected {
+    @apply bg-blue-100 text-blue-900;
+}
+
+.react-datepicker__day--disabled {
+    @apply text-gray-400 cursor-not-allowed hover:bg-transparent;
+}
+
+.react-datepicker__navigation-icon::before {
+    @apply border-gray-600;
+}
+
+.react-datepicker__navigation:hover *::before {
+    @apply border-gray-900;
+}
