@@ -103,6 +103,53 @@ export function aggregateByTicket(
 }
 
 // ---------------------------------------------------------------------------
+// Per-member project breakdown
+// ---------------------------------------------------------------------------
+
+export interface MemberProjectHours {
+  projectKey: string;
+  projectName: string;
+  hours: number;
+}
+
+/**
+ * Get per-project hour breakdown for a single team member.
+ * Groups the member's worklogs by project and sums hours.
+ * Returns results sorted by hours descending.
+ */
+export function getProjectHoursForMember(
+  member: TeamMemberTimeData,
+): MemberProjectHours[] {
+  if (member.worklogs.length === 0) return [];
+
+  const grouped = new Map<string, { projectName: string; seconds: number }>();
+
+  for (const wl of member.worklogs) {
+    const existing = grouped.get(wl.projectKey);
+    if (existing) {
+      existing.seconds += wl.timeSpentSeconds;
+    } else {
+      grouped.set(wl.projectKey, {
+        projectName: wl.projectName,
+        seconds: wl.timeSpentSeconds,
+      });
+    }
+  }
+
+  const results: MemberProjectHours[] = [];
+
+  for (const [projectKey, { projectName, seconds }] of grouped) {
+    results.push({
+      projectKey,
+      projectName,
+      hours: secondsToHours(seconds),
+    });
+  }
+
+  return results.sort((a, b) => b.hours - a.hours);
+}
+
+// ---------------------------------------------------------------------------
 // Aggregation: by project
 // ---------------------------------------------------------------------------
 

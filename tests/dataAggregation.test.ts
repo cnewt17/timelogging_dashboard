@@ -4,6 +4,7 @@ import {
   aggregateByTicket,
   aggregateByProject,
   aggregateByTeamMember,
+  getProjectHoursForMember,
 } from "@/utils/dataAggregation";
 import { secondsToHours, formatHours } from "@/utils/timeCalculations";
 import type { JiraIssue, JiraWorklog } from "@/types/jira";
@@ -457,5 +458,92 @@ describe("aggregateByTeamMember", () => {
     expect(result[0]!.accountId).toBe("user-1");
     expect(result[0]!.totalHours).toBe(1.5);
     expect(result[0]!.worklogs).toHaveLength(2);
+  });
+});
+
+// ---------------------------------------------------------------------------
+// getProjectHoursForMember
+// ---------------------------------------------------------------------------
+
+describe("getProjectHoursForMember", () => {
+  test("returns empty array for member with no worklogs", () => {
+    const member = {
+      accountId: "user-1",
+      displayName: "Alice",
+      totalHours: 0,
+      projectKeys: [],
+      worklogs: [],
+    };
+    expect(getProjectHoursForMember(member)).toEqual([]);
+  });
+
+  test("returns single project with correct hours", () => {
+    const issues = [makeIssue({ key: "PROJ-1" })];
+    const worklogMap = new Map([
+      ["PROJ-1", [makeWorklog({ id: "wl-1", timeSpentSeconds: 3600 })]],
+    ]);
+    const entries = transformToWorklogEntries(issues, worklogMap);
+    const members = aggregateByTeamMember(entries);
+    const result = getProjectHoursForMember(members[0]!);
+
+    expect(result).toHaveLength(1);
+    expect(result[0]!.projectKey).toBe("PROJ");
+    expect(result[0]!.projectName).toBe("Project Alpha");
+    expect(result[0]!.hours).toBe(1);
+  });
+
+  test("returns multiple projects sorted by hours descending", () => {
+    const issues = [
+      makeIssue({ key: "PROJ-1" }),
+      makeIssue({
+        key: "BETA-1",
+        fields: {
+          summary: "Beta ticket",
+          status: {
+            self: "",
+            id: "1",
+            name: "Open",
+            statusCategory: { id: 2, key: "new", name: "To Do" },
+          },
+          assignee: null,
+          project: {
+            self: "",
+            id: "10002",
+            key: "BETA",
+            name: "Project Beta",
+          },
+        },
+      }),
+    ];
+    const worklogMap = new Map([
+      ["PROJ-1", [makeWorklog({ id: "wl-1", timeSpentSeconds: 1800 })]],
+      ["BETA-1", [makeWorklog({ id: "wl-2", timeSpentSeconds: 7200 })]],
+    ]);
+    const entries = transformToWorklogEntries(issues, worklogMap);
+    const members = aggregateByTeamMember(entries);
+    const result = getProjectHoursForMember(members[0]!);
+
+    expect(result).toHaveLength(2);
+    // Sorted by hours desc: BETA (2h) before PROJ (0.5h)
+    expect(result[0]!.projectKey).toBe("BETA");
+    expect(result[0]!.hours).toBe(2);
+    expect(result[1]!.projectKey).toBe("PROJ");
+    expect(result[1]!.hours).toBe(0.5);
+  });
+
+  test("aggregates multiple worklogs in same project", () => {
+    const issues = [makeIssue({ key: "PROJ-1" }), makeIssue({ key: "PROJ-2" })];
+    const worklogMap = new Map([
+      ["PROJ-1", [makeWorklog({ id: "wl-1", timeSpentSeconds: 3600 })]],
+      ["PROJ-2", [makeWorklog({ id: "wl-2", timeSpentSeconds: 1800 })]],
+    ]);
+    const entries = transformToWorklogEntries(issues, worklogMap);
+    const members = aggregateByTeamMember(entries);
+    const result = getProjectHoursForMember(members[0]!);
+
+    // Both tickets are in PROJ, so they should be combined
+    expect(result).toHaveLength(1);
+    expect(result[0]!.projectKey).toBe("PROJ");
+    expect(result[0]!.hours).toBe(1.5);
   });
 });

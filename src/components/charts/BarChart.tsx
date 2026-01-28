@@ -20,6 +20,14 @@ export interface BarConfig {
   color?: string;
 }
 
+type TooltipFormatter = (
+  value: number,
+  name: string,
+  item: { payload: Record<string, unknown> },
+  index: number,
+  payload: ReadonlyArray<{ payload: Record<string, unknown> }>,
+) => [React.ReactNode, string] | React.ReactNode;
+
 interface BarChartProps {
   data: Record<string, unknown>[];
   bars: BarConfig[];
@@ -32,6 +40,7 @@ interface BarChartProps {
   showLegend?: boolean;
   className?: string;
   ariaLabel?: string;
+  tooltipFormatter?: TooltipFormatter;
 }
 
 // ---------------------------------------------------------------------------
@@ -50,6 +59,7 @@ export function BarChart({
   showLegend = false,
   className = "",
   ariaLabel = "Bar chart",
+  tooltipFormatter,
 }: BarChartProps) {
   if (data.length === 0) return null;
 
@@ -60,11 +70,7 @@ export function BarChart({
   const isHorizontalBars = layout === "vertical";
 
   return (
-    <div
-      role="img"
-      aria-label={ariaLabel}
-      className={className}
-    >
+    <div role="img" aria-label={ariaLabel} className={className}>
       <ResponsiveContainer width="100%" height={chartHeight}>
         <RechartsBarChart
           data={data}
@@ -82,10 +88,7 @@ export function BarChart({
 
           {isHorizontalBars ? (
             <>
-              <XAxis
-                type="number"
-                {...CHART_DEFAULTS.axisStyle}
-              />
+              <XAxis type="number" {...CHART_DEFAULTS.axisStyle} />
               <YAxis
                 type="category"
                 dataKey={xAxisKey}
@@ -95,19 +98,16 @@ export function BarChart({
             </>
           ) : (
             <>
-              <XAxis
-                dataKey={xAxisKey}
-                {...CHART_DEFAULTS.axisStyle}
-              />
-              <YAxis
-                {...CHART_DEFAULTS.axisStyle}
-              />
+              <XAxis dataKey={xAxisKey} {...CHART_DEFAULTS.axisStyle} />
+              <YAxis {...CHART_DEFAULTS.axisStyle} />
             </>
           )}
 
           {showTooltip && (
             <Tooltip
               {...CHART_DEFAULTS.tooltipStyle}
+              // eslint-disable-next-line @typescript-eslint/no-explicit-any
+              formatter={tooltipFormatter as any}
             />
           )}
 
