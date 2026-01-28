@@ -18,29 +18,30 @@ const TABS = [
 
 type TabId = (typeof TABS)[number]["id"];
 
-interface SprintConfig {
+interface AppConfig {
   sprintStartDate: string;
   sprintLengthDays: number;
+  jiraDomain: string;
 }
 
-const DEFAULT_CONFIG: SprintConfig = {
+const DEFAULT_CONFIG: AppConfig = {
   sprintStartDate: "2026-01-05",
   sprintLengthDays: 14,
+  jiraDomain: "",
 };
 
 function DashboardPage() {
   const [activeTab, setActiveTab] = useState<TabId>("projects");
   const [dateRange, setDateRange] = useState<DateRange>(getLast30Days);
-  const [sprintConfig, setSprintConfig] =
-    useState<SprintConfig>(DEFAULT_CONFIG);
+  const [appConfig, setAppConfig] = useState<AppConfig>(DEFAULT_CONFIG);
 
   const { data, isLoading, error, fetchData, clearError } = useWorklogData();
 
-  // Fetch sprint config on mount
+  // Fetch app config on mount
   useEffect(() => {
     fetch("/api/config")
       .then((res) => res.json())
-      .then((data: SprintConfig) => setSprintConfig(data))
+      .then((data: AppConfig) => setAppConfig(data))
       .catch(() => {
         // Use defaults on error
       });
@@ -61,8 +62,8 @@ function DashboardPage() {
         <DateRangePicker
           value={dateRange}
           onChange={handleDateRangeChange}
-          sprintStartDate={sprintConfig.sprintStartDate}
-          sprintLengthDays={sprintConfig.sprintLengthDays}
+          sprintStartDate={appConfig.sprintStartDate}
+          sprintLengthDays={appConfig.sprintLengthDays}
           isLoading={isLoading}
         />
       }

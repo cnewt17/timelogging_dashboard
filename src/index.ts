@@ -34,9 +34,10 @@ const jiraClient = new JiraApiClient(configResult.data);
 // Sprint configuration (with defaults)
 // ---------------------------------------------------------------------------
 
-const sprintConfig = {
+const appConfig = {
   sprintStartDate: process.env.SPRINT_START_DATE || "2026-01-05",
   sprintLengthDays: parseInt(process.env.SPRINT_LENGTH_DAYS || "14", 10),
+  jiraDomain: configResult.data.domain,
 };
 
 // ---------------------------------------------------------------------------
@@ -107,7 +108,7 @@ const server = serve({
 
     "/api/config": {
       GET() {
-        return Response.json(sprintConfig);
+        return Response.json(appConfig);
       },
     },
 
