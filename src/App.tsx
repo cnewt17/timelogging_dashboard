@@ -6,9 +6,10 @@ import { TabNav } from "./components/TabNav";
 import { ProjectBreakdownChart } from "./components/ProjectBreakdownChart";
 import { TeamMemberBreakdown } from "./components/TeamMemberBreakdown";
 import { DateRangePicker } from "./components/DateRangePicker";
+import { LoadingSpinner, Toast } from "./components/common";
+import { useWorklogData } from "./hooks/useWorklogData";
 import { getLast30Days } from "./utils/datePresets";
 import type { DateRange } from "./utils/datePresets";
-import type { ProjectTimeData, TeamMemberTimeData } from "./types/app";
 
 const TABS = [
   { id: "projects", label: "By Project" },
@@ -33,6 +34,8 @@ function DashboardPage() {
   const [sprintConfig, setSprintConfig] =
     useState<SprintConfig>(DEFAULT_CONFIG);
 
+  const { data, isLoading, error, fetchData, clearError } = useWorklogData();
+
   // Fetch sprint config on mount
   useEffect(() => {
     fetch("/api/config")
@@ -43,29 +46,52 @@ function DashboardPage() {
       });
   }, []);
 
-  // Placeholder data - will be replaced with actual data fetching
-  const projectData: ProjectTimeData[] = [];
-  const teamMemberData: TeamMemberTimeData[] = [];
+  // Fetch data when date range changes (triggered by Apply button)
+  const handleDateRangeChange = (newRange: DateRange) => {
+    setDateRange(newRange);
+    fetchData(newRange);
+  };
+
+  const projectData = data?.projects ?? [];
+  const teamMemberData = data?.teamMembers ?? [];
 
   return (
     <DashboardLayout
       headerChildren={
         <DateRangePicker
           value={dateRange}
-          onChange={setDateRange}
+          onChange={handleDateRangeChange}
           sprintStartDate={sprintConfig.sprintStartDate}
           sprintLengthDays={sprintConfig.sprintLengthDays}
+          isLoading={isLoading}
         />
       }
     >
       <div className="space-y-6">
+        {/* Error toast */}
+        {error && (
+          <Toast
+            message={error}
+            type="error"
+            onDismiss={clearError}
+            autoDismissMs={10000}
+          />
+        )}
+
         <TabNav
           tabs={[...TABS]}
           activeTab={activeTab}
           onChange={(id) => setActiveTab(id as TabId)}
         />
 
-        <div className="bg-white rounded-lg border border-gray-200 p-4 sm:p-6">
+        <div className="relative bg-white rounded-lg border border-gray-200 p-4 sm:p-6">
+          {/* Loading overlay */}
+          {isLoading && (
+            <div className="absolute inset-0 z-10 flex items-center justify-center rounded-lg bg-white/70">
+              <LoadingSpinner message="Loading worklog data..." />
+            </div>
+          )}
+
           {activeTab === "projects" && (
             <ProjectBreakdownChart projects={projectData} />
           )}
