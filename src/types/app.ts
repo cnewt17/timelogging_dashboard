@@ -59,6 +59,16 @@ export const projectTimeDataSchema = z.object({
 });
 export type ProjectTimeData = z.infer<typeof projectTimeDataSchema>;
 
+/** Aggregated time data for a team member */
+export const teamMemberTimeDataSchema = z.object({
+  accountId: z.string(),
+  displayName: z.string(),
+  totalHours: z.number(),
+  projectKeys: z.array(z.string()),
+  worklogs: z.array(worklogEntrySchema),
+});
+export type TeamMemberTimeData = z.infer<typeof teamMemberTimeDataSchema>;
+
 /** Date range for filtering */
 export const dateRangeSchema = z.object({
   startDate: z.string(),

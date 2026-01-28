@@ -30,6 +30,7 @@ export {
   worklogEntrySchema,
   ticketTimeDataSchema,
   projectTimeDataSchema,
+  teamMemberTimeDataSchema,
   dateRangeSchema,
 } from "./app";
 
@@ -39,5 +40,6 @@ export type {
   WorklogEntry,
   TicketTimeData,
   ProjectTimeData,
+  TeamMemberTimeData,
   DateRange,
 } from "./app";
