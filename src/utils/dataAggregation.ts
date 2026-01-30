@@ -50,6 +50,20 @@ export function transformToWorklogEntries(
 }
 
 // ---------------------------------------------------------------------------
+// Filtering
+// ---------------------------------------------------------------------------
+
+/**
+ * Filter worklog entries to only those from a specific team member.
+ */
+export function filterWorklogsByTeamMember(
+  entries: WorklogEntry[],
+  accountId: string,
+): WorklogEntry[] {
+  return entries.filter((entry) => entry.author.accountId === accountId);
+}
+
+// ---------------------------------------------------------------------------
 // Aggregation: by ticket
 // ---------------------------------------------------------------------------
 

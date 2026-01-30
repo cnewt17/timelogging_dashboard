@@ -6,9 +6,14 @@ import { TabNav } from "./components/TabNav";
 import { ProjectBreakdownChart } from "./components/ProjectBreakdownChart";
 import { ProjectDrillDown } from "./components/ProjectDrillDown";
 import { TeamMemberBreakdown } from "./components/TeamMemberBreakdown";
+import { TeamMemberFilter } from "./components/TeamMemberFilter";
 import { DateRangePicker } from "./components/DateRangePicker";
 import { LoadingSpinner, Toast } from "./components/common";
 import { useWorklogData } from "./hooks/useWorklogData";
+import {
+  filterWorklogsByTeamMember,
+  aggregateByProject,
+} from "./utils/dataAggregation";
 import { getLast30Days } from "./utils/datePresets";
 import type { DateRange } from "./utils/datePresets";
 
@@ -38,6 +43,8 @@ function DashboardPage() {
   const [selectedProjectKey, setSelectedProjectKey] = useState<string | null>(
     null,
   );
+  const [selectedTeamMemberAccountId, setSelectedTeamMemberAccountId] =
+    useState<string | null>(null);
 
   const { data, isLoading, error, fetchData, clearError } = useWorklogData();
 
@@ -58,8 +65,30 @@ function DashboardPage() {
     setSelectedProjectKey(null); // Clear selection when date range changes
   };
 
-  const projectData = data?.projects ?? [];
   const teamMemberData = data?.teamMembers ?? [];
+
+  // Clear team member filter if selected member no longer in data
+  const teamMemberExists =
+    selectedTeamMemberAccountId === null ||
+    teamMemberData.some((m) => m.accountId === selectedTeamMemberAccountId);
+
+  if (!teamMemberExists && selectedTeamMemberAccountId !== null) {
+    // Use effect to avoid setting state during render
+    setTimeout(() => setSelectedTeamMemberAccountId(null), 0);
+  }
+
+  // Filter project data by team member if selected
+  const projectData = (() => {
+    if (!data) return [];
+    if (!selectedTeamMemberAccountId) return data.projects;
+
+    // Re-aggregate with filtered entries
+    const filteredEntries = filterWorklogsByTeamMember(
+      data.entries,
+      selectedTeamMemberAccountId,
+    );
+    return aggregateByProject(filteredEntries, data.issues);
+  })();
 
   // Find selected project for drill-down
   const selectedProject = selectedProjectKey
@@ -71,16 +100,29 @@ function DashboardPage() {
     setSelectedProjectKey((prev) => (prev === projectKey ? null : projectKey));
   };
 
+  // Extract unique team members for filter dropdown
+  const teamMemberOptions = teamMemberData.map((m) => ({
+    accountId: m.accountId,
+    displayName: m.displayName,
+  }));
+
   return (
     <DashboardLayout
       headerChildren={
-        <DateRangePicker
-          value={dateRange}
-          onChange={handleDateRangeChange}
-          sprintStartDate={appConfig.sprintStartDate}
-          sprintLengthDays={appConfig.sprintLengthDays}
-          isLoading={isLoading}
-        />
+        <div className="flex items-center gap-4">
+          <DateRangePicker
+            value={dateRange}
+            onChange={handleDateRangeChange}
+            sprintStartDate={appConfig.sprintStartDate}
+            sprintLengthDays={appConfig.sprintLengthDays}
+            isLoading={isLoading}
+          />
+          <TeamMemberFilter
+            members={teamMemberOptions}
+            selectedAccountId={selectedTeamMemberAccountId}
+            onChange={setSelectedTeamMemberAccountId}
+          />
+        </div>
       }
     >
       <div className="space-y-6">

@@ -483,29 +483,9 @@ Add dropdown to filter all dashboard data by specific team member.
 ---
 
 #### F3.6 - Search/Filter Tickets
-**Priority**: P2  
-**Complexity**: Low  
-**Time Estimate**: 2 hours  
+**Status**: Redundant due to the feature not beng required
 
-**Description**:
-Add search input to filter tickets in the table by ticket ID or summary text.
-
-**Acceptance Criteria**:
-- [ ] Search input above ticket table
-- [ ] Filters tickets as user types (live search)
-- [ ] Matches ticket ID or summary (case-insensitive)
-- [ ] Shows count of filtered results
-- [ ] Clear search button (X icon)
-- [ ] Debounced to avoid performance issues
-
-**Technical Notes**:
-- Client-side filtering (no API call needed)
-- Debounce by 300ms
-- Use simple string `.includes()` or regex
-
-**Files Created**:
-- `/src/components/TicketSearch.tsx`
-- `/src/hooks/useSearch.ts`
+~Original Scope: Add search input to filter tickets in the table by ticket ID or summary text.
 
 ---
 

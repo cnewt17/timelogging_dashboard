@@ -1,6 +1,10 @@
 import { useState, useCallback, useRef } from "react";
 import type { JiraIssue, JiraWorklog } from "@/types/jira";
-import type { ProjectTimeData, TeamMemberTimeData } from "@/types/app";
+import type {
+  ProjectTimeData,
+  TeamMemberTimeData,
+  WorklogEntry,
+} from "@/types/app";
 import {
   transformToWorklogEntries,
   aggregateByProject,
@@ -18,6 +22,7 @@ export interface WorklogData {
   projects: ProjectTimeData[];
   teamMembers: TeamMemberTimeData[];
   issues: JiraIssue[];
+  entries: WorklogEntry[];
 }
 
 interface CacheEntry {
@@ -120,6 +125,7 @@ export function useWorklogData(): UseWorklogDataReturn {
         projects,
         teamMembers,
         issues: result.issues,
+        entries,
       };
 
       // Cache the result
@@ -132,7 +138,8 @@ export function useWorklogData(): UseWorklogDataReturn {
     } catch (err) {
       // Only update error if this is still the current fetch
       if (fetchId === fetchIdRef.current) {
-        const message = err instanceof Error ? err.message : "An error occurred";
+        const message =
+          err instanceof Error ? err.message : "An error occurred";
         setError(message);
       }
     } finally {
